@@ -1,111 +1,107 @@
 # Quantitative Finance & Derivatives Pricing Lab
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Active-success)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue) ![License](https://img.shields.io/badge/License-MIT-green) ![Status](https://img.shields.io/badge/Status-Active-success)
 
-## 📖 Project Overview
-This repository contains a suite of quantitative finance models developed in Python. It bridges the gap between theoretical financial engineering and practical implementation.
-
-The library focuses on three core pillars of quantitative finance:
-1.  **Stochastic Calculus:** Modeling random market behaviors (Brownian Motion, Mean Reversion).
-2.  **Risk Management:** Quantifying portfolio tail risk using matrix algebra (Cholesky Decomposition).
-3.  **Numerical Methods:** Solving complex pricing problems where analytical formulas fail (Monte Carlo, Newton-Raphson).
+## 📖 Project Abstract
+This repository houses a suite of Python-based financial models designed to address core problems in asset pricing, risk management, and stochastic calculus. The library moves beyond theoretical derivation, providing executable engines for:
+* **Stochastic Interest Rate Calibration** (Vasicek Framework)
+* **Multivariate Risk Analysis** (Monte Carlo VaR with Cholesky Decomposition)
+* **Numerical Volatility Extraction** (Inverse Black-Scholes Solvers)
+* **Path-Dependent Derivatives Pricing** (Geometric Brownian Motion)
 
 ---
 
-## 🛠️ Module Breakdown
+## 🛠️ Model Architecture
 
 ### 1. Interest Rate Calibration (Vasicek Model)
-**File:** `us_treasury_fair_value_model.py`
+**Script:** `us_treasury_fair_value_model.py`
 
-#### 🔹 The Concept 
-Interest rates do not move randomly forever; they tend to "snap back" to a long-term average, like a rubber band. This model simulates thousands of possible future interest rate paths to determine the "Fair Price" of a Zero Coupon Bond today.
+**Objective:**
+To quantify the "convexity bias" in bond pricing by comparing deterministic valuation (Constant Rate) against a stochastic mean-reverting framework.
 
-#### 🔸 The Mathematics 
-Implements the **Vasicek Ornstein-Uhlenbeck Process** (SDE), defined as:
+**Mathematical Framework:**
+The model implements the **Vasicek Ornstein-Uhlenbeck Process**, defined by the Stochastic Differential Equation (SDE):
 $$dr_t = a(b - r_t)dt + \sigma dW_t$$
 
-* **$a$ (Speed of Reversion):** How fast rates return to the mean.
-* **$b$ (Long Term Mean):** The equilibrium interest rate level.
-* **$\sigma$ (Volatility):** The standard deviation of rate changes.
+* $a$: Speed of mean reversion (calibrated to historical yield curve dynamics).
+* $b$: Long-term equilibrium interest rate.
+* $\sigma$: Instantaneous volatility of rate changes.
 
-#### 💡 Usage Example
-> **Scenario:** The 10-Year Treasury yield is currently **4.20%**, but the long-term historical average is **3.06%**.
-> * **Model Action:** Simulates 10,000 paths where rates drift downward over time.
-> * **Output:** Calculates a bond price that accounts for this "downward drift" risk, offering a more accurate valuation than simple constant-rate discounting.
+**Implementation Logic:**
+* **Calibration:** Parameters are tuned to mimic the historical volatility and reversion characteristics of the 10-Year US Treasury Note (TNX).
+* **Simulation:** Generates 10,000 discrete rate paths using Euler-Maruyama discretization.
+* **Valuation:** Discounts Zero Coupon Bond (ZCB) cash flows along each stochastic path to derive a risk-adjusted Fair Value.
 
 ---
 
-### 2. Portfolio Risk Engine (VaR & Cholesky)
-**File:** `mc_var_portfolio_pricer_corralation.py`
+### 2. Portfolio Risk Engine (VaR & Correlation)
+**Script:** `mc_var_portfolio_pricer_corralation.py`
 
-#### 🔹 The Concept 
-If you own Apple, Microsoft, and Nvidia, you don't just have 3 random stocks. You have a "Tech Portfolio." If one crashes, the others likely will too. This script calculates the maximum amount you could lose in a month with 95% confidence, while respecting how these stocks move *together*.
+**Objective:**
+To calculate **Value at Risk (VaR)** and **Expected Shortfall (ES)** for a multi-asset technology portfolio (AAPL, MSFT, NVDA), ensuring that cross-asset correlations are preserved during stress testing.
 
-#### 🔸 The Mathematics 
-To simulate correlated assets, we cannot use simple random numbers. We apply **Cholesky Decomposition** to the Covariance Matrix $\Sigma$:
+**Mathematical Framework:**
+To generate correlated market scenarios from uncorrelated random noise ($Z$), we apply **Cholesky Decomposition** to the covariance matrix $\Sigma$:
 $$L L^T = \Sigma$$
 $$Z_{correlated} = L \cdot Z_{uncorrelated}$$
 
-This transforms standard normal random variables into correlated random variables that preserve the portfolio's "DNA."
-
-#### 💡 Usage Example
-> **Input:** Portfolio Value: \$3,000,000 (Equal weight AAPL, MSFT, NVDA).
-> **Simulation:** Runs 1,000 "future months."
-> **Output:**
-> * *Worst Case (5% Cutoff):* \$2,750,000
-> * *Value at Risk (VaR):* **\$250,000** (We are 95% sure losses won't exceed this amount).
+**Implementation Logic:**
+* **Data Ingestion:** Dynamically fetches historical adjusted close prices via `yfinance` to construct the rolling covariance matrix.
+* **Matrix Algebra:** Decomposes the covariance structure to ensure simulated price paths respect the historical "coupling" of asset returns.
+* **Risk Metric:** Computes the 95% Confidence Interval ($1-\alpha$) tail risk over a 30-day forward horizon.
 
 ---
 
 ### 3. Numerical Volatility Solver (Inverse BSM)
-**File:** `implied_vol_code.py`
+**Script:** `implied_vol_code.py`
 
-#### 🔹 The Concept 
-In the option market, we know the Price (e.g., \$5.00), but we don't know the "Implied Volatility" (fear gauge). Since the Black-Scholes formula works forwards (Vol $\to$ Price), we need a special algorithm to work backwards (Price $\to$ Vol) to find out what the market is thinking.
+**Objective:**
+To extract **Implied Volatility (IV)** from observed market option prices. Since the Black-Scholes equation is not algebraically invertible, this script treats volatility as an optimization problem.
 
-#### 🔸 The Mathematics 
-There is no algebraic inverse for the Cumulative Normal Distribution Function ($N(d_1)$). We solve for $\sigma$ numerically using the **Newton-Raphson Method**:
+**Mathematical Framework:**
+We solve for the root $\sigma$ where $C_{model}(\sigma) - C_{market} = 0$ using the **Newton-Raphson Method**:
 $$\sigma_{n+1} = \sigma_n - \frac{C(\sigma_n) - C_{market}}{\nu(\sigma_n)}$$
 
-Where $\nu$ (Vega) is the derivative of price with respect to volatility.
+* $\nu(\sigma_n)$: The option's Vega (sensitivity of price to volatility).
 
-#### 💡 Usage Example
-> **Input:** Call Option Price = \$10.00 | Strike = \$100 | Underlying = \$100.
-> **Process:** The script guesses a volatility (e.g., 50%), checks the error, and adjusts using the slope (Vega) until it matches the \$10.00 price perfectly.
-> **Output:** Implied Volatility = **18.4%**.
+**Implementation Logic:**
+* **Optimization:** Iteratively adjusts the volatility guess based on the gradient (Vega) until the model price converges to the market price.
+* **Precision:** Enforces a strict convergence tolerance ($\epsilon < 1e-5$) to ensure pricing accuracy within one cent.
 
 ---
 
 ### 4. Monte Carlo Option Pricing
-**File:** `montecarlo_optionpricer_py.py`
+**Script:** `montecarlo_optionpricer_py.py`
 
-#### 🔹 The Concept 
-Sometimes, math formulas are too rigid. Monte Carlo simulation is like running a video game of the stock market 1,000,000 times. We record the profit in every single game, take the average, and discount it back to today. It validates that "The Law of Large Numbers" holds true.
+**Objective:**
+To validate analytical pricing formulas using numerical simulation. This module prices European Options under the **Risk-Neutral Measure ($\mathbb{Q}$)**.
 
-#### 🔸 The Mathematics 
-Prices European options under the Risk-Neutral Measure ($\mathbb{Q}$) using Geometric Brownian Motion (GBM):
+**Mathematical Framework:**
+Asset prices are modeled using **Geometric Brownian Motion (GBM)**:
 $$S_T = S_0 \exp\left( (r - \frac{1}{2}\sigma^2)T + \sigma \sqrt{T} Z \right)$$
 
-* **Convergence:** Demonstrates that as $N \to \infty$, $\text{Mean}(Payoff) \to \text{Black-Scholes Price}$.
-
-#### 💡 Usage Example
-> **Simulation:** 1,000,000 iterations.
-> **Theoretical BSM Price:** \$15.34
-> **Simulated Price:** \$15.33
-> **Result:** Validates the pricing model with < $0.01 error.
+**Implementation Logic:**
+* **Law of Large Numbers:** Demonstrates that as $N \to \infty$ (1,000,000 iterations), the simulated mean payoff converges to the analytical Black-Scholes price.
+* **Distribution Analysis:** Visualizes the probability density function (PDF) of terminal asset prices to analyze the skewness and kurtosis of log-normal returns.
 
 ---
 
-## 💻 Tech Stack & Requirements
+## 💻 Tech Stack & Dependencies
 
-The project is built entirely in **Python 3.x** and relies on the standard quantitative stack:
+The laboratory is built on the standard Python quantitative stack:
 
-* **NumPy:** For high-performance vectorization and matrix operations.
-* **SciPy:** For statistical functions (`norm.cdf`, `norm.pdf`).
-* **Matplotlib:** For visualizing stochastic paths and probability distributions.
-* **YFinance:** For fetching real-time covariance data from Yahoo Finance.
+* **NumPy:** High-performance vectorization and linear algebra (Cholesky, Dot Products).
+* **SciPy:** Statistical functions for Cumulative Distribution Functions (`norm.cdf`) and Probability Density Functions (`norm.pdf`).
+* **Matplotlib:** Visualization of stochastic paths and Monte Carlo distributions.
+* **YFinance:** API integration for real-time market data ingestion.
 
-## 🚀 How to Run
-1.  Clone the repository.
-2.  Install dependencies: `pip install numpy scipy matplotlib yfinance`
-3.  Run any script: `python us_treasury_fair_value_model.py`
+## 🚀 Execution Guide
+```bash
+# 1. Clone the repository
+git clone [https://github.com/YOUR_USERNAME/Quantitative-Finance-Lab.git](https://github.com/YOUR_USERNAME/Quantitative-Finance-Lab.git)
+
+# 2. Install required libraries
+pip install numpy scipy matplotlib yfinance
+
+# 3. Run a model (e.g., Vasicek Interest Rates)
+python us_treasury_fair_value_model.py
