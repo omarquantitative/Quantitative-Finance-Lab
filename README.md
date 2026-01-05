@@ -17,10 +17,10 @@ The library focuses on three core pillars of quantitative finance:
 ### 1. Interest Rate Calibration (Vasicek Model)
 **File:** `us_treasury_fair_value_model.py`
 
-#### 🔹 The Concept (Beginner)
+#### 🔹 The Concept 
 Interest rates do not move randomly forever; they tend to "snap back" to a long-term average, like a rubber band. This model simulates thousands of possible future interest rate paths to determine the "Fair Price" of a Zero Coupon Bond today.
 
-#### 🔸 The Mathematics (Professional)
+#### 🔸 The Mathematics 
 Implements the **Vasicek Ornstein-Uhlenbeck Process** (SDE), defined as:
 $$dr_t = a(b - r_t)dt + \sigma dW_t$$
 
@@ -38,10 +38,10 @@ $$dr_t = a(b - r_t)dt + \sigma dW_t$$
 ### 2. Portfolio Risk Engine (VaR & Cholesky)
 **File:** `mc_var_portfolio_pricer_corralation.py`
 
-#### 🔹 The Concept (Beginner)
+#### 🔹 The Concept 
 If you own Apple, Microsoft, and Nvidia, you don't just have 3 random stocks. You have a "Tech Portfolio." If one crashes, the others likely will too. This script calculates the maximum amount you could lose in a month with 95% confidence, while respecting how these stocks move *together*.
 
-#### 🔸 The Mathematics (Professional)
+#### 🔸 The Mathematics 
 To simulate correlated assets, we cannot use simple random numbers. We apply **Cholesky Decomposition** to the Covariance Matrix $\Sigma$:
 $$L L^T = \Sigma$$
 $$Z_{correlated} = L \cdot Z_{uncorrelated}$$
@@ -60,10 +60,10 @@ This transforms standard normal random variables into correlated random variable
 ### 3. Numerical Volatility Solver (Inverse BSM)
 **File:** `implied_vol_code.py`
 
-#### 🔹 The Concept (Beginner)
+#### 🔹 The Concept 
 In the option market, we know the Price (e.g., \$5.00), but we don't know the "Implied Volatility" (fear gauge). Since the Black-Scholes formula works forwards (Vol $\to$ Price), we need a special algorithm to work backwards (Price $\to$ Vol) to find out what the market is thinking.
 
-#### 🔸 The Mathematics (Professional)
+#### 🔸 The Mathematics 
 There is no algebraic inverse for the Cumulative Normal Distribution Function ($N(d_1)$). We solve for $\sigma$ numerically using the **Newton-Raphson Method**:
 $$\sigma_{n+1} = \sigma_n - \frac{C(\sigma_n) - C_{market}}{\nu(\sigma_n)}$$
 
@@ -79,10 +79,10 @@ Where $\nu$ (Vega) is the derivative of price with respect to volatility.
 ### 4. Monte Carlo Option Pricing
 **File:** `montecarlo_optionpricer_py.py`
 
-#### 🔹 The Concept (Beginner)
+#### 🔹 The Concept 
 Sometimes, math formulas are too rigid. Monte Carlo simulation is like running a video game of the stock market 1,000,000 times. We record the profit in every single game, take the average, and discount it back to today. It validates that "The Law of Large Numbers" holds true.
 
-#### 🔸 The Mathematics (Professional)
+#### 🔸 The Mathematics 
 Prices European options under the Risk-Neutral Measure ($\mathbb{Q}$) using Geometric Brownian Motion (GBM):
 $$S_T = S_0 \exp\left( (r - \frac{1}{2}\sigma^2)T + \sigma \sqrt{T} Z \right)$$
 
